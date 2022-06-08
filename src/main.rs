@@ -37,12 +37,10 @@ struct Rover {
 }
 
 fn execute(command: Command, planet: Planet, rover: Rover) -> Rover {
-    Rover {
-        position: Position {
-            x: 0,
-            y: 0,
-        },
-        direction: Direction::East,
+    match command {
+        Command::TurnLeft => Rover { direction: Direction::West, ..rover },
+        Command::TurnRight => Rover { direction: Direction::East, ..rover },
+        _ => rover
     }
 }
 
