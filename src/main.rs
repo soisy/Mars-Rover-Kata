@@ -8,17 +8,20 @@ fn main() {
     println!("Hello, world!");
 }
 
-pub fn parse_commands(commands: &str) -> Vec<Command> {
+pub fn parse_commands(commands: &str) -> Vec<char> {
+    let allowed_commands = vec!['L', 'R', 'F', 'B'];
     commands.chars()
-        .filter(|c| "FBRL".contains(c))
-        .map(|c| Command::new(c))
-        .collect();
+        .filter(|c| allowed_commands.contains(c))
+        .collect()
 }
 
 pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Option<Rover> {
-    Some(commands.chars().fold(rover, |rover, command| {
-        execute(Command::new(command), &planet, rover)
-    }))
+    Some(
+        parse_commands(commands).iter()
+        .fold(rover, |rover, &command| {
+            execute(Command::new(command), &planet, rover)
+        })
+    )
 }
 
 #[cfg(test)]
@@ -155,4 +158,12 @@ mod tests {
         assert_eq!(rover, Some(Rover::new(4, 3, "N")));
     }
 
+    #[test]
+    fn empty_command_string() {
+        let planet = Planet { w: 5, h: 4};
+        let rover = Rover::new(0, 0, "N");
+        let rover = execute_commands("", planet, rover);
+
+        assert_eq!(rover, Some(Rover::new(0, 0, "N")));
+    }
 }
