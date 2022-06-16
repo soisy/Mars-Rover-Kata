@@ -51,6 +51,19 @@ pub enum Command {
     TurnRight,
 }
 
+// dovrebbe resituire un Option<Command>
+impl Command {
+    pub fn new(c: char) -> Command {
+        match c {
+            'F' => Command::MoveForward,
+            'B' => Command::MoveBackward,
+            'L' => Command::TurnLeft,
+            'R' => Command::TurnRight,
+            _ => panic!("Invalid command"),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct Rover {
     position: Position,
@@ -73,7 +86,8 @@ impl Rover {
     }
 }
 
-pub fn execute(command: Command, planet: Planet, rover: Rover) -> Rover {
+
+pub fn execute(command: Command, planet: &Planet, rover: Rover) -> Rover {
     match command {
         Command::TurnLeft => turn_left(rover),
         Command::TurnRight => turn_right(rover),
@@ -82,12 +96,12 @@ pub fn execute(command: Command, planet: Planet, rover: Rover) -> Rover {
     }
 }
 
-fn move_forward(planet: Planet, rover: Rover) -> Rover {
+fn move_forward(planet: &Planet, rover: Rover) -> Rover {
     let position = planet.new_position(&rover.position, &rover.direction);
     Rover { position, ..rover}
 }
 
-fn move_backward(planet: Planet, rover: Rover) -> Rover {
+fn move_backward(planet: &Planet, rover: Rover) -> Rover {
     let position = planet.new_position(&rover.position, &rover.direction.opposite());
     Rover { position, ..rover}
 }

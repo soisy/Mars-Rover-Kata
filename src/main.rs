@@ -2,8 +2,23 @@
 
 mod domain;
 
+use domain::*;
+
 fn main() {
     println!("Hello, world!");
+}
+
+pub fn parse_commands(commands: &str) -> Vec<Command> {
+    commands.chars()
+        .filter(|c| "FBRL".contains(c))
+        .map(|c| Command::new(c))
+        .collect();
+}
+
+pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Option<Rover> {
+    Some(commands.chars().fold(rover, |rover, command| {
+        execute(Command::new(command), &planet, rover)
+    }))
 }
 
 #[cfg(test)]
@@ -16,7 +31,7 @@ mod tests {
     fn rotate_right_command() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "N");
-        let rover = execute(Command::TurnRight, planet, rover);
+        let rover = execute(Command::TurnRight, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "E"));
     }
@@ -26,7 +41,7 @@ mod tests {
     fn rotate_left_command() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "N");
-        let rover = execute(Command::TurnLeft, planet, rover);
+        let rover = execute(Command::TurnLeft, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "W"));
     }
@@ -35,7 +50,7 @@ mod tests {
     fn move_forward_command() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "N");
-        let rover = execute(Command::MoveForward, planet, rover);
+        let rover = execute(Command::MoveForward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 1, "N"));
     }
@@ -44,7 +59,7 @@ mod tests {
     fn move_backward_command() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 1, "N");
-        let rover = execute(Command::MoveBackward, planet, rover);
+        let rover = execute(Command::MoveBackward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "N"));
     }
@@ -53,7 +68,7 @@ mod tests {
     fn pacman_effect_north_forward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 4, "N");
-        let rover = execute(Command::MoveForward, planet, rover);
+        let rover = execute(Command::MoveForward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "N"));
     }
@@ -62,7 +77,7 @@ mod tests {
     fn pacman_effect_sud_forward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "S");
-        let rover = execute(Command::MoveForward, planet, rover);
+        let rover = execute(Command::MoveForward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 4, "S"));
     }
@@ -71,7 +86,7 @@ mod tests {
     fn pacman_effect_east_forward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(3, 0, "E");
-        let rover = execute(Command::MoveForward, planet, rover);
+        let rover = execute(Command::MoveForward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "E"));
     }
@@ -80,7 +95,7 @@ mod tests {
     fn pacman_effect_west_forward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "W");
-        let rover = execute(Command::MoveForward, planet, rover);
+        let rover = execute(Command::MoveForward, &planet, rover);
 
         assert_eq!(rover, Rover::new(3, 0, "W"));
     }
@@ -89,7 +104,7 @@ mod tests {
     fn pacman_effect_north_backward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 4, "S");
-        let rover = execute(Command::MoveBackward, planet, rover);
+        let rover = execute(Command::MoveBackward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "S"));
     }
@@ -98,7 +113,7 @@ mod tests {
     fn pacman_effect_south_backward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "N");
-        let rover = execute(Command::MoveBackward, planet, rover);
+        let rover = execute(Command::MoveBackward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 4, "N"));
     }
@@ -107,7 +122,7 @@ mod tests {
     fn pacman_effect_east_backward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(3, 0, "W");
-        let rover = execute(Command::MoveBackward, planet, rover);
+        let rover = execute(Command::MoveBackward, &planet, rover);
 
         assert_eq!(rover, Rover::new(0, 0, "W"));
     }
@@ -116,8 +131,28 @@ mod tests {
     fn pacman_effect_west_backward() {
         let planet = Planet { w: 4, h: 5};
         let rover = Rover::new(0, 0, "E");
-        let rover = execute(Command::MoveBackward, planet, rover);
+        let rover = execute(Command::MoveBackward, &planet, rover);
 
         assert_eq!(rover, Rover::new(3, 0, "E"));
     }
+
+    // +-----+-----+-----+-----+-----+
+    // | 0,3 |     |     |     | 4,3 |
+    // +-----+-----+-----+-----+-----+
+    // |     |     |     |     |     |
+    // +-----+-----+-----+-----+-----+
+    // |     |     |     |     |     |
+    // +-----+-----+-----+-----+-----+
+    // | 0,0 |     |     |     | 4,0 |
+    // +-----+-----+-----+-----+-----+
+
+    #[test]
+    fn go_to_opposite_angle() {
+        let planet = Planet { w: 5, h: 4};
+        let rover = Rover::new(0, 0, "N");
+        let rover = execute_commands("LFRB", planet, rover);
+
+        assert_eq!(rover, Some(Rover::new(4, 3, "N")));
+    }
+
 }
