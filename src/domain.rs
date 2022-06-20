@@ -98,12 +98,12 @@ pub fn execute(command: Command, planet: &Planet, rover: Rover) -> Rover {
 
 fn move_forward(planet: &Planet, rover: Rover) -> Rover {
     let position = planet.new_position(&rover.position, &rover.direction);
-    Rover { position, ..rover}
+    Rover { position, ..rover }
 }
 
 fn move_backward(planet: &Planet, rover: Rover) -> Rover {
     let position = planet.new_position(&rover.position, &rover.direction.opposite());
-    Rover { position, ..rover}
+    Rover { position, ..rover }
 }
 
 fn turn_left(rover: Rover) -> Rover {
