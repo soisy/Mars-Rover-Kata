@@ -1,9 +1,18 @@
 pub struct Planet {
     pub h: usize,
     pub w: usize,
+    pub obstacles: Vec<Position>,
 }
 
 impl Planet {
+    pub fn without_obstacles(w: usize, h: usize) -> Planet {
+        Planet { w, h, obstacles: vec![] }
+    }
+
+    pub fn new (w: usize, h: usize, obstacles: Vec<Position>) -> Planet {
+        Planet { w, h, obstacles }
+    }
+
     fn new_position(&self, position: &Position, direction: &Direction) -> Position {
         let (x, y) = match direction {
             Direction::North => (position.x, position.y + 1),
@@ -15,14 +24,30 @@ impl Planet {
         let x = if (x > self.w - 1) { 0 } else { x };
         let y = if (y > self.h - 1) { 0 } else { y };
 
-        Position { x, y }
+        let new_position = Position { x, y };
+
+        if self.obstacles.iter().any(|&p| p == new_position) {
+            *position
+        } else {
+            new_position
+        }
+    }
+
+    fn is_obstacle(&self, position: &Position) -> bool {
+        self.obstacles.iter().any(|p| p == position)
     }
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-struct Position {
+pub struct Position {
     pub x: usize,
     pub y: usize,
+}
+
+impl Position {
+    pub fn new(x: usize, y: usize) -> Position {
+        Position { x, y }
+    }
 }
 
 #[derive(PartialEq, Debug)]
