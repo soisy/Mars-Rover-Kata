@@ -13,7 +13,7 @@ impl Planet {
         Planet { w, h, obstacles }
     }
 
-    fn new_position(&self, position: &Position, direction: &Direction) -> Position {
+    fn new_position(&self, position: &Position, direction: &Direction) -> Result<Position, MissionError> {
         let (x, y) = match direction {
             Direction::North => (position.x, position.y + 1),
             Direction::East => (position.x + 1, position.y),
@@ -27,15 +27,20 @@ impl Planet {
         let new_position = Position { x, y };
 
         if self.obstacles.iter().any(|&p| p == new_position) {
-            *position
+            Err(MissionError::HitObstacle(*position))
         } else {
-            new_position
+            Ok(new_position)
         }
     }
 
     fn is_obstacle(&self, position: &Position) -> bool {
         self.obstacles.iter().any(|p| p == position)
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum MissionError {
+    HitObstacle(Position),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -112,23 +117,23 @@ impl Rover {
 }
 
 
-pub fn execute(command: Command, planet: &Planet, rover: Rover) -> Rover {
+pub fn execute(command: Command, planet: &Planet, rover: Rover) -> Result<Rover, MissionError> {
     match command {
-        Command::TurnLeft => turn_left(rover),
-        Command::TurnRight => turn_right(rover),
+        Command::TurnLeft => Ok(turn_left(rover)),
+        Command::TurnRight => Ok(turn_right(rover)),
         Command::MoveForward => move_forward(planet, rover),
         Command::MoveBackward => move_backward(planet, rover),
     }
 }
 
-fn move_forward(planet: &Planet, rover: Rover) -> Rover {
-    let position = planet.new_position(&rover.position, &rover.direction);
-    Rover { position, ..rover }
+fn move_forward(planet: &Planet, rover: Rover) -> Result<Rover, MissionError> {
+    planet.new_position(&rover.position, &rover.direction)
+        .map(|p| Rover { position: p, direction: rover.direction })
 }
 
-fn move_backward(planet: &Planet, rover: Rover) -> Rover {
-    let position = planet.new_position(&rover.position, &rover.direction.opposite());
-    Rover { position, ..rover }
+fn move_backward(planet: &Planet, rover: Rover) -> Result<Rover, MissionError> {
+    planet.new_position(&rover.position, &rover.direction.opposite())
+        .map(|p| Rover { position: p, direction: rover.direction })
 }
 
 fn turn_left(rover: Rover) -> Rover {

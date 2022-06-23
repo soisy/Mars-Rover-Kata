@@ -15,13 +15,11 @@ pub fn parse_commands(commands: &str) -> Vec<char> {
         .collect()
 }
 
-pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Option<Rover> {
-    Some(
-        parse_commands(commands).iter()
-        .fold(rover, |rover, &command| {
+pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<Rover, MissionError> {
+    parse_commands(commands).iter()
+        .try_fold(rover, |rover, &command| {
             execute(Command::new(command), &planet, rover)
         })
-    )
 }
 
 #[cfg(test)]
@@ -36,7 +34,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute(Command::TurnRight, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "E"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "E")));
     }
 
 
@@ -46,7 +44,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute(Command::TurnLeft, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "W"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "W")));
     }
 
     #[test]
@@ -55,7 +53,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute(Command::MoveForward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 1, "N"));
+        assert_eq!(rover, Ok(Rover::new(0, 1, "N")));
     }
 
     #[test]
@@ -64,7 +62,7 @@ mod tests {
         let rover = Rover::new(0, 1, "N");
         let rover = execute(Command::MoveBackward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "N"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "N")));
     }
 
     #[test]
@@ -73,7 +71,7 @@ mod tests {
         let rover = Rover::new(0, 4, "N");
         let rover = execute(Command::MoveForward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "N"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "N")));
     }
 
     #[test]
@@ -82,7 +80,7 @@ mod tests {
         let rover = Rover::new(0, 0, "S");
         let rover = execute(Command::MoveForward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 4, "S"));
+        assert_eq!(rover, Ok(Rover::new(0, 4, "S")));
     }
 
     #[test]
@@ -91,7 +89,7 @@ mod tests {
         let rover = Rover::new(3, 0, "E");
         let rover = execute(Command::MoveForward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "E"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "E")));
     }
 
     #[test]
@@ -100,7 +98,7 @@ mod tests {
         let rover = Rover::new(0, 0, "W");
         let rover = execute(Command::MoveForward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(3, 0, "W"));
+        assert_eq!(rover, Ok(Rover::new(3, 0, "W")));
     }
 
     #[test]
@@ -109,7 +107,7 @@ mod tests {
         let rover = Rover::new(0, 4, "S");
         let rover = execute(Command::MoveBackward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "S"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "S")));
     }
 
     #[test]
@@ -118,7 +116,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute(Command::MoveBackward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 4, "N"));
+        assert_eq!(rover, Ok(Rover::new(0, 4, "N")));
     }
 
     #[test]
@@ -127,7 +125,7 @@ mod tests {
         let rover = Rover::new(3, 0, "W");
         let rover = execute(Command::MoveBackward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(0, 0, "W"));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "W")));
     }
 
     #[test]
@@ -136,7 +134,7 @@ mod tests {
         let rover = Rover::new(0, 0, "E");
         let rover = execute(Command::MoveBackward, &planet, rover);
 
-        assert_eq!(rover, Rover::new(3, 0, "E"));
+        assert_eq!(rover, Ok(Rover::new(3, 0, "E")));
     }
 
     // +-----+-----+-----+-----+-----+
@@ -155,7 +153,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute_commands("LFRB", planet, rover);
 
-        assert_eq!(rover, Some(Rover::new(4, 3, "N")));
+        assert_eq!(rover, Ok(Rover::new(4, 3, "N")));
     }
 
     #[test]
@@ -164,7 +162,7 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute_commands("", planet, rover);
 
-        assert_eq!(rover, Some(Rover::new(0, 0, "N")));
+        assert_eq!(rover, Ok(Rover::new(0, 0, "N")));
     }
 
     #[test]
@@ -187,6 +185,6 @@ mod tests {
         let rover = Rover::new(0, 0, "N");
         let rover = execute_commands("RFF", planet, rover);
 
-        assert_eq!(rover, Some(Rover::new(1, 0, "E")));
+        assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
 }
