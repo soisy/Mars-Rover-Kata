@@ -24,7 +24,7 @@ pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<
 
 #[cfg(test)]
 mod tests {
-    use std::mem::discriminant;
+    use std::{mem::discriminant, num::ParseIntError};
 
     use super::*;
     use domain::*;
@@ -190,17 +190,26 @@ mod tests {
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
 
-    fn parse_planet(pos: &str) -> Result<Planet, &str> {
-        let dimensions:Vec<usize> = pos.split('x').map(|dimension| dimension.parse::<usize>().unwrap()).collect();
-        let w = dimensions.get(0).unwrap();
-        let h = dimensions.get(1).unwrap();
-
-        Ok(Planet::new(*w,*h, vec![]))
+    fn parse_planet(pos: &str) -> Result<Planet, String> {
+        pos
+            .split('x')
+            .map(|dimension: &str| dimension.parse::<usize>())
+            .collect::<Result<Vec<usize>,_>>()
+            .map(|dimensions| {
+                let w = dimensions.get(0).unwrap();
+                let h = dimensions.get(1).unwrap();
+                Planet::new(*w,*h, vec![])
+            })
+        .map_err(|e| { e.to_string() })
     }
 
     #[test]
     fn parse_planet_with_valid_and_invalid_arguments() {
         assert_eq!(parse_planet("5x4"), Ok(Planet::new(5,4, vec![])));
+
+        assert_eq!(parse_planet("10x4000"), Ok(Planet::new(10,4000, vec![])));
+
+        assert_eq!(parse_planet("AAAx4000"), Err(String::from("invalid digit found in string")));
 
     }
 }
