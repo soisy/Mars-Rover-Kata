@@ -1,3 +1,5 @@
+
+#[derive(Debug, PartialEq)]
 pub struct Planet {
     pub h: usize,
     pub w: usize,

@@ -24,6 +24,8 @@ pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<
 
 #[cfg(test)]
 mod tests {
+    use std::mem::discriminant;
+
     use super::*;
     use domain::*;
     use pretty_assertions::assert_eq;
@@ -166,7 +168,7 @@ mod tests {
     }
 
     #[test]
-    fn hit_obstacle() {
+    fn hit_obstacle_during_command_executions() {
         // val planet   = ("5x4", "2,0 0,3 3,2")
         // val rover    = ("0,0", "N")
         // val commands = "RFF"
@@ -186,5 +188,19 @@ mod tests {
         let rover = execute_commands("RFF", planet, rover);
 
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
+    }
+
+    fn parse_planet(pos: &str) -> Result<Planet, &str> {
+        let dimensions:Vec<usize> = pos.split('x').map(|dimension| dimension.parse::<usize>().unwrap()).collect();
+        let w = dimensions.get(0).unwrap();
+        let h = dimensions.get(1).unwrap();
+
+        Ok(Planet::new(*w,*h, vec![]))
+    }
+
+    #[test]
+    fn parse_planet_with_valid_and_invalid_arguments() {
+        assert_eq!(parse_planet("5x4"), Ok(Planet::new(5,4, vec![])));
+
     }
 }
