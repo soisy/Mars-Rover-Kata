@@ -25,6 +25,8 @@ pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<
 #[cfg(test)]
 mod tests {
     use std::{mem::discriminant, num::ParseIntError};
+    use itertools::Itertools;
+    use tuple_transpose::*;
 
     use super::*;
     use domain::*;
@@ -190,7 +192,8 @@ mod tests {
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
 
-    fn parse_planet(pos: &str) -> Result<Planet, String> {
+    /*
+    fn parse_planet_old(pos: &str) -> Result<Planet, String> {
         pos
             .split('x')
             .map(|dimension| dimension.parse::<usize>())
@@ -217,6 +220,21 @@ mod tests {
             // .map(|w, h| {
             //     Planet::new(*w,*h, vec![])
             // })
+    }
+    */
+
+    fn parse_planet(pos: &str) -> Result<Planet, String> {
+        pos.split("x")
+            .next_tuple()
+            .ok_or(String::from("invalid digit found in string"))
+            .map(|(w, h)| {
+                (w.parse::<usize>(), h.parse::<usize>())
+            })
+            .map(|x| x.transpose())
+            .and_then(|x| {
+                let (w, h) = x.map_err(|e| e.to_string())?;
+                Ok(Planet::new(w, h, vec![]))
+            })
     }
 
     // Result<Vec<usize>, _> -> Result<(usize, usize), _>
