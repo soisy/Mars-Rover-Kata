@@ -227,12 +227,12 @@ mod tests {
         pos.split("x")
             .next_tuple()
             .ok_or(String::from("invalid digit found in string"))
-            .map(|(w, h)| -> Result<(usize, usize), ParseIntError> {
-                Ok((w.parse::<usize>()?, h.parse::<usize>()?))
-            })
-            .and_then(|x| {
-                let (w, h) = x.map_err(|e| e.to_string())?;
-                Ok(Planet::new(w, h, vec![]))
+            .and_then(|(w, h)| {
+                Ok(Planet::new(
+                    w.parse::<usize>().map_err(|e| e.to_string())?,
+                    h.parse::<usize>().map_err(|e| e.to_string())?,
+                    vec![],
+                ))
             })
     }
 
