@@ -26,7 +26,6 @@ pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<
 mod tests {
     use std::{mem::discriminant, num::ParseIntError};
     use itertools::Itertools;
-    use tuple_transpose::*;
 
     use super::*;
     use domain::*;
@@ -225,14 +224,26 @@ mod tests {
 
     fn parse_planet(pos: &str) -> Result<Planet, String> {
         pos.split("x")
-            .next_tuple()
-            .ok_or(String::from("invalid digit found in string"))
-            .and_then(|(w, h)| {
-                Ok(Planet::new(
-                    w.parse::<usize>().map_err(|e| e.to_string())?,
-                    h.parse::<usize>().map_err(|e| e.to_string())?,
-                    vec![],
-                ))
+            .fold(Ok(vec![]), |acc, elem| {
+                acc.and_then(|mut dimensions| {
+                    if dimensions.len() == 2 {
+                        Err(String::from("too many dimensions"))
+                    } else {
+                        dimensions.push(elem.parse::<usize>().map_err(|e| e.to_string())?);
+                        Ok(dimensions)
+                    }
+                })
+            }) // Result<Vec<&str>, String>
+            .and_then(|dimensions| {
+                if dimensions.len() != 2 {
+                    Err(String::from("too few dimensions"))
+                } else {
+                    Ok(Planet::new(
+                        dimensions[0],
+                        dimensions[1],
+                        vec![],
+                    ))
+                }
             })
     }
 
@@ -242,11 +253,12 @@ mod tests {
     fn parse_planet_with_valid_and_invalid_arguments() {
         assert_eq!(parse_planet("5x4"), Ok(Planet::new(5,4, vec![])));
         assert_eq!(parse_planet("10x4000"), Ok(Planet::new(10,4000, vec![])));
+        assert_eq!(parse_planet("5x4x6"), Err(String::from("too many dimensions")));
         assert_eq!(parse_planet("AAAx4000"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("10xAAA"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("x4000"), Err(String::from("cannot parse integer from empty string")));
         assert_eq!(parse_planet("asdads"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("10x"), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("134"), Err(String::from("invalid digit found in string")));
+        assert_eq!(parse_planet("134"), Err(String::from("too few dimensions")));
     }
 }
