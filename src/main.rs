@@ -191,59 +191,13 @@ mod tests {
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
 
-    /*
-    fn parse_planet_old(pos: &str) -> Result<Planet, String> {
-        pos
-            .split('x')
-            .map(|dimension| dimension.parse::<usize>())
-            .collect::<Result<Vec<usize>,_>>()
-            .map_err(|e| e.to_string())
-            .and_then(|dimensions| {
-                dimensions.get(0)
-                    .ok_or_else(|| String::from("There is no width"))
-                    .and_then(|width| {
-                        dimensions.get(1)
-                            .ok_or_else(|| String::from("There is no height"))
-                            .and_then(|height| {
-                                Ok((width, height))
-                            })
-                    })
-            })
-            .map(|(w, h)| {
-                Planet::new(*w,*h, vec![])
-            })
-            // .?????(|dimensions| {
-            //     dimensions.get(0).Box::new
-            //     let h = dimensions.get(1).unwrap();
-            // })
-            // .map(|w, h| {
-            //     Planet::new(*w,*h, vec![])
-            // })
-    }
-    */
-
     fn parse_planet(pos: &str) -> Result<Planet, String> {
         pos.split("x")
-            .fold(Ok(vec![]), |acc, elem| {
-                acc.and_then(|mut dimensions| {
-                    if dimensions.len() == 2 {
-                        Err(String::from("too many dimensions"))
-                    } else {
-                        dimensions.push(elem.parse::<usize>().map_err(|e| e.to_string())?);
-                        Ok(dimensions)
-                    }
-                })
-            }) // Result<Vec<&str>, String>
-            .and_then(|dimensions| {
-                if dimensions.len() != 2 {
-                    Err(String::from("too few dimensions"))
-                } else {
-                    Ok(Planet::new(
-                        dimensions[0],
-                        dimensions[1],
-                        vec![],
-                    ))
-                }
+            .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
+            .collect::<Result<Vec<usize>, String>>()
+            .and_then(|dimensions| match dimensions.len() {
+                2 => Ok(Planet::new(dimensions[0], dimensions[1], vec![])),
+                _ => Err("invalid number of dimensions".to_string()),
             })
     }
 
@@ -253,12 +207,12 @@ mod tests {
     fn parse_planet_with_valid_and_invalid_arguments() {
         assert_eq!(parse_planet("5x4"), Ok(Planet::new(5,4, vec![])));
         assert_eq!(parse_planet("10x4000"), Ok(Planet::new(10,4000, vec![])));
-        assert_eq!(parse_planet("5x4x6"), Err(String::from("too many dimensions")));
+        assert_eq!(parse_planet("5x4x6"), Err(String::from("invalid number of dimensions")));
         assert_eq!(parse_planet("AAAx4000"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("10xAAA"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("x4000"), Err(String::from("cannot parse integer from empty string")));
         assert_eq!(parse_planet("asdads"), Err(String::from("invalid digit found in string")));
         assert_eq!(parse_planet("10x"), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("134"), Err(String::from("too few dimensions")));
+        assert_eq!(parse_planet("134"), Err(String::from("invalid number of dimensions")));
     }
 }
