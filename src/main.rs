@@ -15,6 +15,46 @@ pub fn parse_commands(commands: &str) -> Vec<char> {
         .collect()
 }
 
+fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
+    let (w, h) = parse_dimensions(dimensions)?;
+    let obstacles = parse_obstacles(obstacles)?;
+    Ok(Planet::new(w, h, obstacles))
+}
+
+fn parse_dimensions(dimensions: &str) -> Result<(usize, usize), String> {
+    dimensions
+        .split("x")
+        .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
+        .collect::<Result<Vec<usize>, String>>()
+        .and_then(|dimensions| match dimensions.len() {
+            2 => Ok((dimensions[0], dimensions[1])),
+            _ => Err("invalid number of dimensions".to_string()),
+        })
+}
+
+fn parse_obstacles(obstacles: &str) -> Result<Vec<Position>, String> {
+    obstacles
+        .split(" ") // -> "2,1"
+        .filter(|x| x.len() > 0)
+        .map(parse_position)
+        .collect::<Result<Vec<Position>, String>>()
+        .and_then(|v| match v.len() {
+            0 => Ok(vec![]),
+            _ => Ok(v),
+        })
+}
+
+fn parse_position(position: &str) -> Result<Position, String> {
+    position
+        .split(",")
+        .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
+        .collect::<Result<Vec<usize>, String>>()
+        .and_then(|position| match position.len() {
+            2 => Ok(Position::new(position[0], position[1])),
+            _ => Err("invalid number of coordinates".to_string()),
+        })
+}
+
 pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<Rover, MissionError> {
     parse_commands(commands).iter()
         .try_fold(rover, |rover, &command| {
@@ -190,48 +230,6 @@ mod tests {
 
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
-
-    fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
-        let (w, h) = parse_dimensions(dimensions)?;
-        let obstacles = parse_obstacles(obstacles)?;
-        Ok(Planet::new(w, h, obstacles))
-    }
-
-    fn parse_dimensions(dimensions: &str) -> Result<(usize, usize), String> {
-        dimensions
-            .split("x")
-            .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
-            .collect::<Result<Vec<usize>, String>>()
-            .and_then(|dimensions| match dimensions.len() {
-                2 => Ok((dimensions[0], dimensions[1])),
-                _ => Err("invalid number of dimensions".to_string()),
-            })
-    }
-
-    fn parse_obstacles(obstacles: &str) -> Result<Vec<Position>, String> {
-        obstacles
-            .split(" ") // -> "2,1"
-            .filter(|x| x.len() > 0)
-            .map(parse_position)
-            .collect::<Result<Vec<Position>, String>>()
-            .and_then(|v| match v.len() {
-                0 => Ok(vec![]),
-                _ => Ok(v),
-            })
-    }
-
-    fn parse_position(position: &str) -> Result<Position, String> {
-        position
-            .split(",")
-            .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
-            .collect::<Result<Vec<usize>, String>>()
-            .and_then(|position| match position.len() {
-                2 => Ok(Position::new(position[0], position[1])),
-                _ => Err("invalid number of coordinates".to_string()),
-            })
-    }
-
-    // Result<Vec<usize>, _> -> Result<(usize, usize), _>
 
     #[test]
     fn parse_planet_with_valid_and_invalid_arguments() {
