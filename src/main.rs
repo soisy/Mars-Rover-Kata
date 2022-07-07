@@ -191,13 +191,43 @@ mod tests {
         assert_eq!(rover, Err(MissionError::HitObstacle(Position { x: 1, y: 0 })));
     }
 
-    fn parse_planet(pos: &str) -> Result<Planet, String> {
-        pos.split("x")
+    fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
+        let (w, h) = parse_dimensions(dimensions)?;
+        let obstacles = parse_obstacles(obstacles)?;
+        Ok(Planet::new(w, h, obstacles))
+    }
+
+    fn parse_dimensions(dimensions: &str) -> Result<(usize, usize), String> {
+        dimensions
+            .split("x")
             .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
             .collect::<Result<Vec<usize>, String>>()
             .and_then(|dimensions| match dimensions.len() {
-                2 => Ok(Planet::new(dimensions[0], dimensions[1], vec![])),
+                2 => Ok((dimensions[0], dimensions[1])),
                 _ => Err("invalid number of dimensions".to_string()),
+            })
+    }
+
+    fn parse_obstacles(obstacles: &str) -> Result<Vec<Position>, String> {
+        obstacles
+            .split(" ") // -> "2,1"
+            .filter(|x| x.len() > 0)
+            .map(parse_position)
+            .collect::<Result<Vec<Position>, String>>()
+            .and_then(|v| match v.len() {
+                0 => Ok(vec![]),
+                _ => Ok(v),
+            })
+    }
+
+    fn parse_position(position: &str) -> Result<Position, String> {
+        position
+            .split(",")
+            .map(|x| x.parse::<usize>().map_err(|e| e.to_string()))
+            .collect::<Result<Vec<usize>, String>>()
+            .and_then(|position| match position.len() {
+                2 => Ok(Position::new(position[0], position[1])),
+                _ => Err("invalid number of coordinates".to_string()),
             })
     }
 
@@ -205,14 +235,34 @@ mod tests {
 
     #[test]
     fn parse_planet_with_valid_and_invalid_arguments() {
-        assert_eq!(parse_planet("5x4"), Ok(Planet::new(5,4, vec![])));
-        assert_eq!(parse_planet("10x4000"), Ok(Planet::new(10,4000, vec![])));
-        assert_eq!(parse_planet("5x4x6"), Err(String::from("invalid number of dimensions")));
-        assert_eq!(parse_planet("AAAx4000"), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("10xAAA"), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("x4000"), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("asdads"), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("10x"), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("134"), Err(String::from("invalid number of dimensions")));
+        assert_eq!(parse_planet("5x4", ""), Ok(Planet::new(5,4, vec![])));
+        assert_eq!(parse_planet("10x4000", ""), Ok(Planet::new(10,4000, vec![])));
+        assert_eq!(parse_planet("5x4x6", ""), Err(String::from("invalid number of dimensions")));
+        assert_eq!(parse_planet("AAAx4000", ""), Err(String::from("invalid digit found in string")));
+        assert_eq!(parse_planet("10xAAA", ""), Err(String::from("invalid digit found in string")));
+        assert_eq!(parse_planet("x4000", ""), Err(String::from("cannot parse integer from empty string")));
+        assert_eq!(parse_planet("asdads", ""), Err(String::from("invalid digit found in string")));
+        assert_eq!(parse_planet("10x", ""), Err(String::from("cannot parse integer from empty string")));
+        assert_eq!(parse_planet("134", ""), Err(String::from("invalid number of dimensions")));
+    }
+
+    #[test]
+    fn parse_planet_with_obstacles() {
+        assert_eq!(
+            parse_planet("5x4", "2,1 0,2"),
+            Ok(Planet::new(5,4, vec![Position::new(2,1), Position::new(0,2)]))
+        );
+        assert_eq!(
+            parse_planet("5x4", "turbofish"),
+            Err(String::from("invalid digit found in string"))
+        );
+        assert_eq!(
+            parse_planet("5x4", "2,1,4"),
+            Err(String::from("invalid number of coordinates"))
+        );
+        assert_eq!(
+            parse_planet("5x4", "2 1,4"),
+            Err(String::from("invalid number of coordinates"))
+        );
     }
 }
