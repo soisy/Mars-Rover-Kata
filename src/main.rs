@@ -24,6 +24,22 @@ fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
     Ok(Planet::new(w, h, obstacles))
 }
 
+fn parse_rover(position: &str, direction: &str) -> Result<Rover, String> {
+    let position = parse_position(position).map_err(|e| e.to_string())?;
+    let direction = parse_direction(direction).map_err(|e| e.to_string())?;
+    Ok(Rover { position, direction })
+}
+
+fn parse_direction(direction: &str) -> Result<Direction, MissionError> {
+    match direction {
+        "N" => Ok(Direction::North),
+        "E" => Ok(Direction::East),
+        "S" => Ok(Direction::South),
+        "W" => Ok(Direction::West),
+        _ => Err(MissionError::InvalidDirection(direction.to_string())),
+    }
+}
+
 fn parse_dimensions(dimensions: &str) -> Result<(usize, usize), MissionError> {
     dimensions
         .split("x")
@@ -266,5 +282,13 @@ mod tests {
             parse_planet("5x4", "2 1,4"),
             Err(String::from("invalid coordinates `2 1,4`"))
         );
+    }
+
+    #[test]
+    fn parse_rover_with_valid_and_invalid_arguments() {
+        assert_eq!(parse_rover("0,0", "N"), Ok(Rover::new(0,0,"N")));
+        assert_eq!(parse_rover("AAAA", "N"), Err(String::from("invalid coordinates `AAAA`")));
+        assert_eq!(parse_rover("1,1", "invalid"), Err(String::from("invalid direction `invalid`")));
+        assert_eq!(parse_rover("AAA", "invalid"), Err(String::from("multiple errors needed")));
     }
 }

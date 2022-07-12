@@ -49,6 +49,8 @@ pub enum MissionError {
     InvalidCoordinates(String),
     #[error("invalid dimensions `{0}`")]
     InvalidDimensions(String),
+    #[error("invalid direction `{0}`")]
+    InvalidDirection(String),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -64,7 +66,7 @@ impl Position {
 }
 
 #[derive(PartialEq, Debug)]
-enum Direction {
+pub enum Direction {
     North,
     East,
     South,
@@ -104,8 +106,8 @@ impl Command {
 
 #[derive(PartialEq, Debug)]
 pub struct Rover {
-    position: Position,
-    direction: Direction
+    pub position: Position,
+    pub direction: Direction
 }
 
 impl Rover {
