@@ -7,15 +7,6 @@ use std::{error::Error, num::ParseIntError};
 use thiserror::Error;
 use domain::*;
 
-#[derive(Debug, Clone)]
-struct ParseError;
-
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid first item to double")
-    }
-}
-
 fn main() {
     println!("Hello, world!");
 }
@@ -248,13 +239,13 @@ mod tests {
     fn parse_planet_with_valid_and_invalid_arguments() {
         assert_eq!(parse_planet("5x4", ""), Ok(Planet::new(5,4, vec![])));
         assert_eq!(parse_planet("10x4000", ""), Ok(Planet::new(10,4000, vec![])));
-        assert_eq!(parse_planet("5x4x6", ""), Err(String::from("invalid number of dimensions")));
-        assert_eq!(parse_planet("AAAx4000", ""), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("10xAAA", ""), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("x4000", ""), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("asdads", ""), Err(String::from("invalid digit found in string")));
-        assert_eq!(parse_planet("10x", ""), Err(String::from("cannot parse integer from empty string")));
-        assert_eq!(parse_planet("134", ""), Err(String::from("invalid number of dimensions")));
+        assert_eq!(parse_planet("5x4x6", ""), Err(String::from("invalid dimensions `5x4x6`")));
+        assert_eq!(parse_planet("AAAx4000", ""), Err(String::from("invalid dimensions `AAAx4000`")));
+        assert_eq!(parse_planet("10xAAA", ""), Err(String::from("invalid dimensions `10xAAA`")));
+        assert_eq!(parse_planet("x4000", ""), Err(String::from("invalid dimensions `x4000`")));
+        assert_eq!(parse_planet("asdads", ""), Err(String::from("invalid dimensions `asdads`")));
+        assert_eq!(parse_planet("10x", ""), Err(String::from("invalid dimensions `10x`")));
+        assert_eq!(parse_planet("134", ""), Err(String::from("invalid dimensions `134`")));
     }
 
     #[test]
