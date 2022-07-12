@@ -1,3 +1,4 @@
+use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub struct Planet {
@@ -40,9 +41,14 @@ impl Planet {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
 pub enum MissionError {
+    #[error("rover hit obstacle")]
     HitObstacle(Position),
+    #[error("invalid coordinates `{0}`")]
+    InvalidCoordinates(String),
+    #[error("invalid dimensions `{0}`")]
+    InvalidDimensions(String),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
