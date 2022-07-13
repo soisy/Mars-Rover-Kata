@@ -5,6 +5,7 @@ mod domain;
 use core::fmt;
 use std::{error::Error, num::ParseIntError};
 use thiserror::Error;
+use multi_try::MultiTry;
 use domain::*;
 
 fn main() {
@@ -24,10 +25,10 @@ fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
     Ok(Planet::new(w, h, obstacles))
 }
 
-fn parse_rover(position: &str, direction: &str) -> Result<Rover, String> {
-    let position = parse_position(position).map_err(|e| e.to_string())?;
-    let direction = parse_direction(direction).map_err(|e| e.to_string())?;
-    Ok(Rover { position, direction })
+fn parse_rover(position: &str, direction: &str) -> Result<Rover, Vec<MissionError>> {
+    parse_position(position)
+        .and_try(parse_direction(direction))
+        .map(|(position, direction)| Rover { position, direction })
 }
 
 fn parse_direction(direction: &str) -> Result<Direction, MissionError> {
@@ -287,8 +288,11 @@ mod tests {
     #[test]
     fn parse_rover_with_valid_and_invalid_arguments() {
         assert_eq!(parse_rover("0,0", "N"), Ok(Rover::new(0,0,"N")));
-        assert_eq!(parse_rover("AAAA", "N"), Err(String::from("invalid coordinates `AAAA`")));
-        assert_eq!(parse_rover("1,1", "invalid"), Err(String::from("invalid direction `invalid`")));
-        assert_eq!(parse_rover("AAA", "invalid"), Err(String::from("multiple errors needed")));
+        assert_eq!(parse_rover("AAAA", "N"), Err(vec![MissionError::InvalidCoordinates(String::from("AAAA"))]));
+        assert_eq!(parse_rover("1,1", "invalid"), Err(vec![MissionError::InvalidDirection(String::from("invalid"))]));
+        assert_eq!(
+            parse_rover("AAA", "invalid"),
+            Err(vec![MissionError::InvalidCoordinates(String::from("AAA")), MissionError::InvalidDirection(String::from("invalid"))])
+        );
     }
 }

@@ -47,9 +47,16 @@ name = "mars_rover_kata"
 version = "0.1.0"
 dependencies = [
  "itertools",
+ "multi_try",
  "pretty_assertions",
  "thiserror",
 ]
+
+[[package]]
+name = "multi_try"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b42256e8ab5f19108cf42e2762786052ae4660635f6fe76134d2cab37068ee8a"
 
 [[package]]
 name = "output_vt100"
