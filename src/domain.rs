@@ -51,6 +51,8 @@ pub enum MissionError {
     InvalidDimensions(String),
     #[error("invalid direction `{0}`")]
     InvalidDirection(String),
+    #[error("invalid command `{0}`")]
+    InvalidCommand(String),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]

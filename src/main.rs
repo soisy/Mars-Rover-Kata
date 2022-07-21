@@ -12,11 +12,11 @@ fn main() {
     println!("Hello, world!");
 }
 
-pub fn parse_commands(commands: &str) -> Vec<char> {
+pub fn parse_commands(commands: &str) -> Result<Vec<char>, MissionError> {
     let allowed_commands = vec!['L', 'R', 'F', 'B'];
-    commands.chars()
+    Ok(commands.chars()
         .filter(|c| allowed_commands.contains(c))
-        .collect()
+        .collect())
 }
 
 fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
@@ -76,11 +76,13 @@ fn parse_position(position: &str) -> Result<Position, MissionError> {
         })
 }
 
-pub fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<Rover, MissionError> {
-    parse_commands(commands).iter()
-        .try_fold(rover, |rover, &command| {
-            execute(Command::new(command), &planet, rover)
-        })
+fn execute_commands(commands: &str, planet: Planet, rover: Rover) -> Result<Rover, MissionError> {
+    parse_commands(commands)
+        .and_then(|commands| commands.iter()
+            .try_fold(rover, |rover, &command| {
+                execute(Command::new(command), &planet, rover)
+            })
+        )
 }
 
 #[cfg(test)]
@@ -230,6 +232,15 @@ mod tests {
     }
 
     #[test]
+    fn invalid_command_string() {
+        let planet = Planet::without_obstacles(5, 4);
+        let rover = Rover::new(0, 0, "N");
+        let rover = execute_commands("RBXRF", planet, rover);
+
+        assert_eq!(rover, Err(MissionError::InvalidCommand("RBXRF".to_string())));
+    }
+
+    #[test]
     fn hit_obstacle_during_command_executions() {
         // val planet   = ("5x4", "2,0 0,3 3,2")
         // val rover    = ("0,0", "N")
@@ -254,8 +265,8 @@ mod tests {
 
     #[test]
     fn parse_planet_with_valid_and_invalid_arguments() {
-        assert_eq!(parse_planet("5x4", ""), Ok(Planet::new(5,4, vec![])));
-        assert_eq!(parse_planet("10x4000", ""), Ok(Planet::new(10,4000, vec![])));
+        assert_eq!(parse_planet("5x4", ""), Ok(Planet::new(5, 4, vec![])));
+        assert_eq!(parse_planet("10x4000", ""), Ok(Planet::new(10, 4000, vec![])));
         assert_eq!(parse_planet("5x4x6", ""), Err(String::from("invalid dimensions `5x4x6`")));
         assert_eq!(parse_planet("AAAx4000", ""), Err(String::from("invalid dimensions `AAAx4000`")));
         assert_eq!(parse_planet("10xAAA", ""), Err(String::from("invalid dimensions `10xAAA`")));
@@ -269,7 +280,7 @@ mod tests {
     fn parse_planet_with_obstacles() {
         assert_eq!(
             parse_planet("5x4", "2,1 0,2"),
-            Ok(Planet::new(5,4, vec![Position::new(2,1), Position::new(0,2)]))
+            Ok(Planet::new(5, 4, vec![Position::new(2, 1), Position::new(0, 2)]))
         );
         assert_eq!(
             parse_planet("5x4", "turbofish"),
@@ -287,7 +298,7 @@ mod tests {
 
     #[test]
     fn parse_rover_with_valid_and_invalid_arguments() {
-        assert_eq!(parse_rover("0,0", "N"), Ok(Rover::new(0,0,"N")));
+        assert_eq!(parse_rover("0,0", "N"), Ok(Rover::new(0, 0, "N")));
         assert_eq!(parse_rover("AAAA", "N"), Err(vec![MissionError::InvalidCoordinates(String::from("AAAA"))]));
         assert_eq!(parse_rover("1,1", "invalid"), Err(vec![MissionError::InvalidDirection(String::from("invalid"))]));
         assert_eq!(
