@@ -14,9 +14,10 @@ fn main() {
 
 pub fn parse_commands(commands: &str) -> Result<Vec<char>, MissionError> {
     let allowed_commands = vec!['L', 'R', 'F', 'B'];
-    Ok(commands.chars()
-        .filter(|c| allowed_commands.contains(c))
-        .collect())
+    commands.chars()
+        .map(|c| allowed_commands.contains(&c).then_some(c))
+        .collect::<Option<Vec<char>>>()
+        .ok_or(MissionError::InvalidCommand(commands.to_string()))
 }
 
 fn parse_planet(dimensions: &str, obstacles: &str) -> Result<Planet, String> {
