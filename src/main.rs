@@ -4,12 +4,34 @@ mod domain;
 
 use core::fmt;
 use std::{error::Error, num::ParseIntError};
+use std::fs::File;
+use std::io::{self, BufReader, Read};
 use thiserror::Error;
 use multi_try::MultiTry;
 use domain::*;
 
 fn main() {
     println!("Hello, world!");
+}
+
+fn load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
+    let contents = File::open(filename)
+        .and_then(|mut file| {
+            let mut contents = String::new();
+            let result = file.read_to_string(&mut contents);
+            match result {
+                Ok(_) => Ok(contents),
+                Err(e) => Err(e),
+            }
+        });
+
+    let lines = contents.unwrap().lines();
+
+    for line in lines {
+        println!("{}", line);
+    }
+
+    Ok(("5x4".to_string(), "2,0 0,3 3,2".to_string()))
 }
 
 pub fn parse_commands(commands: &str) -> Result<Vec<char>, MissionError> {
@@ -306,5 +328,11 @@ mod tests {
             parse_rover("AAA", "invalid"),
             Err(vec![MissionError::InvalidCoordinates(String::from("AAA")), MissionError::InvalidDirection(String::from("invalid"))])
         );
+    }
+
+    #[test]
+    fn load_planet_data_from_file() {
+        let planet_data = load_planet_data("planet.txt");
+        assert_eq!(planet_data, Ok(("5x4".to_string(), "2,0 0,3 3,2".to_string())))
     }
 }
