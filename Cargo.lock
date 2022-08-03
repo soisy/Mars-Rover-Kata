@@ -28,6 +28,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
+name = "do-notation"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3e16a80c1dda2cf52fa07106427d3d798b6331dca8155fcb8c39f7fc78f6dd2"
+
+[[package]]
 name = "either"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -46,6 +52,7 @@ dependencies = [
 name = "mars_rover_kata"
 version = "0.1.0"
 dependencies = [
+ "do-notation",
  "itertools",
  "multi_try",
  "pretty_assertions",
