@@ -53,6 +53,20 @@ pub enum MissionError {
     InvalidDirection(String),
     #[error("invalid command `{0}`")]
     InvalidCommand(String),
+    #[error("file error `{0}`")]
+    FileError(String),
+}
+
+impl MissionError {
+    pub fn file_open(path: &str) -> MissionError {
+        MissionError::FileError(format!("Unable to open file {}", path))
+    }
+    pub fn read_lines(path: &str) -> MissionError {
+        MissionError::FileError(format!("Unable to read lines from file {}", path))
+    }
+    pub fn wrong_number_of_lines(path: &str, expected: usize, actual: usize) -> MissionError {
+        MissionError::FileError(format!("Wrong number of lines in file `{}`: expecting {} got {}", path, expected, actual))
+    }
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]

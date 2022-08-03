@@ -2,6 +2,7 @@
 
 mod domain;
 
+use std::io::prelude::*;
 use core::fmt;
 use std::{error::Error, num::ParseIntError};
 use std::fs::File;
@@ -9,29 +10,46 @@ use std::io::{self, BufReader, Read};
 use thiserror::Error;
 use multi_try::MultiTry;
 use domain::*;
+use do_notation::m;
 
 fn main() {
     println!("Hello, world!");
 }
 
-fn load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
-    let contents = File::open(filename)
-        .and_then(|mut file| {
-            let mut contents = String::new();
-            let result = file.read_to_string(&mut contents);
-            match result {
-                Ok(_) => Ok(contents),
-                Err(e) => Err(e),
-            }
-        });
+fn load_planet_data_boring(filename: &str) -> Result<(String, String), MissionError> {
+    let file = File::open(filename)
+        .map_err(|_| MissionError::FileError(format!("Unable to open file {}", filename.to_string())))?;
+    let mut reader = BufReader::new(file);
+    let lines = reader.lines().map(|line| line.unwrap()).collect::<Vec<_>>();
 
-    let lines = contents.unwrap().lines();
-
-    for line in lines {
-        println!("{}", line);
+    if lines.len() != 2 {
+        return Err(MissionError::FileError(format!("Wrong number of lines: expecting 2 got {}", lines.len())));
     }
 
-    Ok(("5x4".to_string(), "2,0 0,3 3,2".to_string()))
+    Ok((lines[0].to_string(), lines[1].to_string()))
+}
+
+fn load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
+    File::open(filename)
+        .map(|f| BufReader::new(f))
+        .and_then(|b| b.lines().collect::<Result<Vec<String>, _>>())
+        .map_err(|_| MissionError::FileError(format!("Unable to read lines from file {}", filename.to_string())))
+        .and_then(|lines| match lines.len() {
+            2 => Ok((lines[0].clone(), lines[1].clone())),
+            _ => Err(MissionError::FileError(format!("Wrong number of lines: expecting 2 got {}", lines.len()))),
+        })
+}
+
+fn do_load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
+    m! {
+        f <- File::open(filename).map_err(|_| MissionError::file_open(filename));
+        let b = BufReader::new(f);
+        l <- b.lines().collect::<Result<Vec<String>, _>>().map_err(|_| MissionError::read_lines(filename));
+        match l.len() {
+            2 => Ok((l[0].clone(), l[1].clone())),
+            _ => Err(MissionError::wrong_number_of_lines(filename, 2, l.len())),
+        }
+    }
 }
 
 pub fn parse_commands(commands: &str) -> Result<Vec<char>, MissionError> {
@@ -332,7 +350,25 @@ mod tests {
 
     #[test]
     fn load_planet_data_from_file() {
-        let planet_data = load_planet_data("planet.txt");
+        let planet_data = do_load_planet_data("planet.txt");
         assert_eq!(planet_data, Ok(("5x4".to_string(), "2,0 0,3 3,2".to_string())))
+    }
+
+    #[test]
+    fn error_loadin_planet_data_from_nonexistent_file() {
+        let planet_data = do_load_planet_data("nonexistent.txt");
+        assert_eq!(
+            planet_data,
+            Err(MissionError::FileError(String::from("Unable to open file nonexistent.txt")))
+        );
+    }
+
+    #[test]
+    fn load_planet_empty_file() {
+        let planet_data = do_load_planet_data("emptyfile.txt");
+        assert_eq!(
+            planet_data,
+            Err(MissionError::FileError(String::from("Wrong number of lines in file `emptyfile.txt`: expecting 2 got 0")))
+        );
     }
 }
