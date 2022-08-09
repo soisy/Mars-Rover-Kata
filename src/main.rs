@@ -4,16 +4,33 @@ mod domain;
 
 use std::io::prelude::*;
 use core::fmt;
+use std::time::Duration;
 use std::{error::Error, num::ParseIntError};
 use std::fs::File;
-use std::io::{self, BufReader, Read};
+use std::io::{self, BufReader, Read, Write};
 use thiserror::Error;
 use multi_try::MultiTry;
 use domain::*;
 use do_notation::m;
+use promptly::{prompt, prompt_default, prompt_opt, ReadlineError};
+
+type Prompter<S, T> = fn(S) -> Result<T, ReadlineError>;
 
 fn main() {
-    println!("Hello, world!");
+    let result = read_from_console(prompt, "Insert command: ");
+    println!("{:?}", result);
+}
+
+fn read_commands_from_console() -> Result<String, MissionError> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).map_err(|_| MissionError::FileError("".to_string()))?;
+    Ok(input)
+}
+
+fn read_from_console(prompt: Prompter<String, ReadlineError>, message: &str) -> Result<String, ReadlineError> {
+    let name: String = prompt("Enter your name".to_string());
+
+    Ok((name))
 }
 
 fn do_load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
@@ -346,5 +363,30 @@ mod tests {
             planet_data,
             Err(MissionError::FileError(String::from("Wrong number of lines in file `emptyfile.txt`: expecting 2 got 0")))
         );
+    }
+
+    #[test]
+    fn read_command_from_console() {
+        let mut stdin = std::io::stdin();
+        let mut stdout = std::io::stdout();
+        let mut input = String::new();
+        stdin.read_line(&mut input).unwrap();
+        assert_eq!(input, "RFF\n");
+        let mut output = String::new();
+        stdout.write_all(b"RFF\n").unwrap();
+        stdout.flush().unwrap();
+        stdin.read_line(&mut input).unwrap();
+        assert_eq!(input, "RFF\n");
+    }
+
+    #[test]
+    fn read_user_input() {
+        fn prompt(message: &str) -> Result<String, ReadlineError> {
+            return Ok(String::from("RFF"));
+        }
+
+        let result = read_from_console("domanda");
+
+        assert_eq!(result, Ok("RFF".to_string()));
     }
 }
