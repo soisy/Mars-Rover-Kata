@@ -12,12 +12,13 @@ use thiserror::Error;
 use multi_try::MultiTry;
 use domain::*;
 use do_notation::m;
-use promptly::{prompt, prompt_default, prompt_opt, ReadlineError};
+use promptly::{prompt, prompt_default, prompt_opt, ReadlineError, Promptable};
 
-type Prompter<S, T> = fn(S) -> Result<T, ReadlineError>;
+type Prompter<T:Promptable, S: AsRef<str>> = fn(S) -> Result<T, ReadlineError>;
 
 fn main() {
-    let result = read_from_console(prompt, "Insert command: ");
+    //dobbiamo passare prompt alla funzione per mockarla
+    let result = read_from_console(prompt).unwrap();
     println!("{:?}", result);
 }
 
@@ -27,10 +28,8 @@ fn read_commands_from_console() -> Result<String, MissionError> {
     Ok(input)
 }
 
-fn read_from_console(prompt: Prompter<String, ReadlineError>, message: &str) -> Result<String, ReadlineError> {
-    let name: String = prompt("Enter your name".to_string());
-
-    Ok((name))
+fn read_from_console(prompt: Prompter<Promptable, AsRef<str>>) -> Result<String, ReadlineError> {
+    prompt("Enter your name".to_string())
 }
 
 fn do_load_planet_data(filename: &str) -> Result<(String, String), MissionError> {
